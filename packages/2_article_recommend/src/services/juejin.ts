@@ -35,5 +35,6 @@ export async function getLatestArticles(
 export async function getArticleDetail(articleUrl: string): Promise<string> {
   logger.info(`正在获取文章详情: ${articleUrl}`);
   const res = await axios.get(articleUrl);
+  logger.info(`获取文章详情成功: ${articleUrl}`);
   return pureHtml(res.data);
 }

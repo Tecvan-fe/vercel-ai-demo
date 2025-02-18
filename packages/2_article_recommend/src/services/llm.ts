@@ -1,5 +1,6 @@
 import { deepseek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 import pLimit from 'p-limit';
 
 import { logger } from '../utils/logger';
@@ -18,17 +19,9 @@ const runPrompt = async (params: { userPrompt: string; systemPrompt: string }) =
     );
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    logger.error('未设置 DEEPSEEK_API_KEY 环境变量');
-    throw new Error('DEEPSEEK_API_KEY is not set');
-  }
-
   try {
     const { text } = await generateText({
-      model: deepseek('deepseek-chat'),
-      // @ts-ignore
-      apiKey,
+      model: anthropic('claude-3-haiku-20240307'),
       system: systemPrompt,
       prompt: userPrompt,
     });
@@ -102,11 +95,22 @@ export async function evaluateArticle(
   文章内容: ${content}
   `;
 
+  const response = await runPrompt({ systemPrompt, userPrompt: prompt });
   try {
-    const response = await runPrompt({ systemPrompt, userPrompt: prompt });
     const result = JSON.parse(response);
     return result as ArticleRating;
   } catch (e) {
+    logger.error(`评估文章失败: ${(e as Error).message}`);
+    logger.error(response);
+    if (retryTime <= 0) {
+      logger.error('重试次数已用完,放弃评估');
+      return {
+        score: 0,
+        analysis: '评估失败',
+      };
+    }
+    logger.info(`将在3秒后进行第${3 - retryTime}次重试`);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     return await evaluateArticle(article, retryTime - 1);
   }
 }

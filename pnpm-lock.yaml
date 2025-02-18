@@ -23,6 +23,9 @@ importers:
 
   packages/1_bootstrap:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.1.8
+        version: 1.1.8(zod@3.24.2)
       '@ai-sdk/deepseek':
         specifier: ^0.1.10
         version: 0.1.10(zod@3.24.2)
@@ -42,6 +45,9 @@ importers:
 
   packages/2_article_recommend:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.1.8
+        version: 1.1.8(zod@3.24.2)
       '@ai-sdk/deepseek':
         specifier: ^0.1.10
         version: 0.1.10(zod@3.24.2)
@@ -75,6 +81,17 @@ importers:
         version: 5.7.3
 
 packages:
+
+  /@ai-sdk/anthropic@1.1.8(zod@3.24.2):
+    resolution: {integrity: sha512-QD8c3ShPIpXaqjCDq9tCBI9iI/GeZETnP/DxgA8wRTs13Sqx6HcLh1eKTaGyePOtJvRx5XBcR+wSdeZZcaeUQQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+    dependencies:
+      '@ai-sdk/provider': 1.0.7
+      '@ai-sdk/provider-utils': 2.1.8(zod@3.24.2)
+      zod: 3.24.2
+    dev: false
 
   /@ai-sdk/deepseek@0.1.10(zod@3.24.2):
     resolution: {integrity: sha512-JCYFEYog365yFXXrbySAwuYfe6zHKuBPmdOIa3xl0LSE0p1GcvGkZn80lNPLLzqR8GO8S4qUZoH+HL1kqYHaYA==}

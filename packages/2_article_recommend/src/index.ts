@@ -8,11 +8,17 @@ import dayjs from 'dayjs';
 import _ from 'lodash';
 import { type ArticleDetail } from './types';
 import { logger } from './utils/logger';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// 添加这些辅助函数来模拟 __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function generateDailyRecommend() {
   logger.info('开始获取掘金文章...');
   // 1. 获取最新文章
-  const articles = await getLatestArticles({ limit: 3 });
+  const articles = await getLatestArticles({ limit: 30 });
   logger.success(`成功获取 ${articles.length} 篇文章`);
 
   // 2. 评估并筛选文章
@@ -39,7 +45,7 @@ async function generateDailyRecommend() {
   const content = generateReport(qualityArticles, { date: today });
 
   // 5. 保存文件
-  const outputDir = path.resolve(__dirname, '../../docs/juejin');
+  const outputDir = path.resolve(__dirname, '../../../docs/juejin');
   await fs.mkdir(outputDir, { recursive: true });
   const fileName = dayjs(today).format('YYYY-MM-DD');
   const filePath = path.join(outputDir, `${fileName}.md`);

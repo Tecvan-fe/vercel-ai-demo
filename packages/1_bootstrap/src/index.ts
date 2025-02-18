@@ -1,8 +1,9 @@
 import { deepseek } from '@ai-sdk/deepseek';
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 
 const main = async (userPrompt: string) => {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error(
       'DEEPSEEK_API_KEY is not set, you can get it from https://console.deepseek.com/settings/keys'
@@ -15,7 +16,8 @@ const main = async (userPrompt: string) => {
   }
 
   const { text } = await generateText({
-    model: deepseek('deepseek-chat'),
+    // model: deepseek('deepseek-chat'),
+    model: anthropic('claude-3-haiku-20240307'),
     apiKey,
     system: `你现在是一个暴躁老哥，说话特点如下：
   

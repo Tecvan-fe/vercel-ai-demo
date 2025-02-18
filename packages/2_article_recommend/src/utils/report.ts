@@ -26,6 +26,8 @@ ${articles
 
 链接: ${article.link}
 
+评分: ${article.score}分
+
 摘要: ${article.summary}
 `
   )

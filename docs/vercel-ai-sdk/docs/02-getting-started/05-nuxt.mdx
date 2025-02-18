@@ -1,0 +1,386 @@
+---
+title: Nuxt
+description: Welcome to the AI SDK quickstart guide for Nuxt!
+---
+
+# Nuxt Quickstart
+
+The AI SDK is a powerful Typescript library designed to help developers build AI-powered applications.
+
+In this quickstart tutorial, you'll build a simple AI-chatbot with a streaming user interface. Along the way, you'll learn key concepts and techniques that are fundamental to using the SDK in your own projects.
+
+If you are unfamiliar with the concepts of [Prompt Engineering](/docs/advanced/prompt-engineering) and [HTTP Streaming](/docs/advanced/why-streaming), you can optionally read these documents first.
+
+## Prerequisites
+
+To follow this quickstart, you'll need:
+
+- Node.js 18+ and pnpm installed on your local development machine.
+- An OpenAI API key.
+
+If you haven't obtained your OpenAI API key, you can do so by [signing up](https://platform.openai.com/signup/) on the OpenAI website.
+
+## Setup Your Application
+
+Start by creating a new Nuxt application. This command will create a new directory named `my-ai-app` and set up a basic Nuxt application inside it.
+
+<Snippet text="pnpm dlx nuxi@latest init my-ai-app" />
+
+Navigate to the newly created directory:
+
+<Snippet text="cd my-ai-app" />
+
+### Install dependencies
+
+Install `ai` and `@ai-sdk/openai`, the AI SDK's OpenAI provider.
+
+<Note>
+  The AI SDK is designed to be a unified interface to interact with any large
+  language model. This means that you can change model and providers with just
+  one line of code! Learn more about [available providers](/providers) and
+  [building custom providers](/providers/community-providers/custom-providers)
+  in the [providers](/providers) section.
+</Note>
+<div className="my-4">
+  <Tabs items={['pnpm', 'npm', 'yarn']}>
+    <Tab>
+      <Snippet text="pnpm add ai @ai-sdk/openai @ai-sdk/vue zod" dark />
+    </Tab>
+    <Tab>
+      <Snippet text="npm install ai @ai-sdk/openai @ai-sdk/vue zod" dark />
+    </Tab>
+    <Tab>
+      <Snippet text="yarn add ai @ai-sdk/openai @ai-sdk/vue zod" dark />
+    </Tab>
+  </Tabs>
+</div>
+
+<Note type="secondary" fill>
+  Make sure you are using `ai` version 3.1 or higher.
+</Note>
+
+### Configure OpenAI API key
+
+Create a `.env` file in your project root and add your OpenAI API Key. This key is used to authenticate your application with the OpenAI service.
+
+<Snippet text="touch .env" />
+
+Edit the `.env` file:
+
+```env filename=".env"
+OPENAI_API_KEY=xxxxxxxxx
+```
+
+Replace `xxxxxxxxx` with your actual OpenAI API key and configure the environment variable in `nuxt.config.ts`:
+
+```ts filename="nuxt.config.ts"
+export default defineNuxtConfig({
+  // rest of your nuxt config
+  runtimeConfig: {
+    openaiApiKey: process.env.OPENAI_API_KEY,
+  },
+});
+```
+
+<Note className="mb-4">
+  The AI SDK's OpenAI Provider will default to using the `OPENAI_API_KEY`
+  environment variable.
+</Note>
+
+## Create an API route
+
+Create an API route, `server/api/chat.ts` and add the following code:
+
+```typescript filename="server/api/chat.ts"
+import { streamText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+
+export default defineLazyEventHandler(async () => {
+  const apiKey = useRuntimeConfig().openaiApiKey;
+  if (!apiKey) throw new Error('Missing OpenAI API key');
+  const openai = createOpenAI({
+    apiKey: apiKey,
+  });
+
+  return defineEventHandler(async (event: any) => {
+    const { messages } = await readBody(event);
+
+    const result = streamText({
+      model: openai('gpt-4o'),
+      messages,
+    });
+
+    return result.toDataStreamResponse();
+  });
+});
+```
+
+Let's take a look at what is happening in this code:
+
+1. Create an OpenAI provider instance with the `createOpenAI` function from the `@ai-sdk/openai` package.
+2. Define an Event Handler and extract `messages` from the body of the request. The `messages` variable contains a history of the conversation with you and the chatbot and will provide the chatbot with the necessary context to make the next generation.
+3. Call [`streamText`](/docs/reference/ai-sdk-core/stream-text), which is imported from the `ai` package. This function accepts a configuration object that contains a `model` provider (defined in step 1) and `messages` (defined in step 2). You can pass additional [settings](/docs/ai-sdk-core/settings) to further customise the model's behaviour.
+4. The `streamText` function returns a [`StreamTextResult`](/docs/reference/ai-sdk-core/stream-text#result). This result object contains the [ `toDataStreamResponse` ](/docs/reference/ai-sdk-core/stream-text#to-data-stream-response) function which converts the result to a streamed response object.
+5. Return the result to the client to stream the response.
+
+## Wire up the UI
+
+Now that you have an API route that can query an LLM, it's time to setup your frontend. The AI SDK's [ UI ](/docs/ai-sdk-ui/overview) package abstract the complexity of a chat interface into one hook, [`useChat`](/docs/reference/ai-sdk-ui/use-chat).
+
+Update your root page (`pages/index.vue`) with the following code to show a list of chat messages and provide a user message input:
+
+```typescript filename="pages/index.vue"
+<script setup lang="ts">
+import { useChat } from '@ai-sdk/vue';
+
+const { messages, input, handleSubmit } = useChat();
+</script>
+
+<template>
+  <div class="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div v-for="m in messages" :key="m.id" class="whitespace-pre-wrap">
+      {{ m.role === 'user' ? 'User: ' : 'AI: ' }}
+      {{ m.content }}
+    </div>
+
+    <form @submit="handleSubmit">
+      <input
+        class="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
+        v-model="input"
+        placeholder="Say something..."
+      />
+    </form>
+  </div>
+</template>
+```
+
+<Note>
+  If your project has `app.vue` instead of `pages/index.vue`, delete the
+  `app.vue` file and create a new `pages/index.vue` file with the code above.
+</Note>
+
+This page utilizes the `useChat` hook, which will, by default, use the API route you created earlier (`/api/chat`). The hook provides functions and state for handling user input and form submission. The `useChat` hook provides multiple utility functions and state variables:
+
+- `messages` - the current chat messages (an array of objects with `id`, `role`, and `content` properties).
+- `input` - the current value of the user's input field.
+- `handleSubmit` - function to handle form submission.
+
+## Running Your Application
+
+With that, you have built everything you need for your chatbot! To start your application, use the command:
+
+<Snippet text="pnpm run dev" />
+
+Head to your browser and open http://localhost:3000. You should see an input field. Test it out by entering a message and see the AI chatbot respond in real-time! The AI SDK makes it fast and easy to build AI chat interfaces with Nuxt.
+
+## Enhance Your Chatbot with Tools
+
+While large language models (LLMs) have incredible generation capabilities, they struggle with discrete tasks (e.g. mathematics) and interacting with the outside world (e.g. getting the weather). This is where [tools](/docs/ai-sdk-core/tools-and-tool-calling) come in.
+
+Tools are actions that an LLM can invoke. The results of these actions can be reported back to the LLM to be considered in the next response.
+
+For example, if a user asks about the current weather, without tools, the model would only be able to provide general information based on its training data. But with a weather tool, it can fetch and provide up-to-date, location-specific weather information.
+
+Let's enhance your chatbot by adding a simple weather tool.
+
+### Update Your API Route
+
+Modify your `server/api/chat.ts` file to include the new weather tool:
+
+```typescript filename="server/api/chat.ts" highlight="1,18-34"
+import { streamText, tool } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+export default defineLazyEventHandler(async () => {
+  const apiKey = useRuntimeConfig().openaiApiKey;
+  if (!apiKey) throw new Error('Missing OpenAI API key');
+  const openai = createOpenAI({
+    apiKey: apiKey,
+  });
+
+  return defineEventHandler(async (event: any) => {
+    const { messages } = await readBody(event);
+
+    const result = streamText({
+      model: openai('gpt-4o'),
+      messages,
+      tools: {
+        weather: tool({
+          description: 'Get the weather in a location (fahrenheit)',
+          parameters: z.object({
+            location: z
+              .string()
+              .describe('The location to get the weather for'),
+          }),
+          execute: async ({ location }) => {
+            const temperature = Math.round(Math.random() * (90 - 32) + 32);
+            return {
+              location,
+              temperature,
+            };
+          },
+        }),
+      },
+    });
+
+    return result.toDataStreamResponse();
+  });
+});
+```
+
+In this updated code:
+
+1. You import the `tool` function from the `ai` package and `z` from `zod` for schema validation.
+2. You define a `tools` object with a `weather` tool. This tool:
+
+   - Has a description that helps the model understand when to use it.
+   - Defines parameters using a Zod schema, specifying that it requires a `location` string to execute this tool. The model will attempt to extract this parameter from the context of the conversation. If it can't, it will ask the user for the missing information.
+   - Defines an `execute` function that simulates getting weather data (in this case, it returns a random temperature). This is an asynchronous function running on the server so you can fetch real data from an external API.
+
+Now your chatbot can "fetch" weather information for any location the user asks about. When the model determines it needs to use the weather tool, it will generate a tool call with the necessary parameters. The `execute` function will then be automatically run, and you can access the results via `toolInvocations` that is available on the message object.
+
+Try asking something like "What's the weather in New York?" and see how the model uses the new tool.
+
+Notice the blank response in the UI? This is because instead of generating a text response, the model generated a tool call. You can access the tool call and subsequent tool result in the `toolInvocations` key of the message object.
+
+### Update the UI
+
+To display the tool invocations in your UI, update your `pages/index.vue` file:
+
+```typescript filename="pages/index.vue" highlight="11-15"
+<script setup lang="ts">
+import { useChat } from '@ai-sdk/vue';
+
+const { messages, input, handleSubmit } = useChat();
+</script>
+
+<template>
+  <div class="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div v-for="m in messages" :key="m.id" class="whitespace-pre-wrap">
+      {{ m.role === 'user' ? 'User: ' : 'AI: ' }}
+      <template v-if="m.toolInvocations">
+        <pre>{{ JSON.stringify(m.toolInvocations, null, 2) }}</pre>
+      </template>
+      <template v-else>
+        <p>{{ m.content }}</p>
+      </template>
+    </div>
+
+    <form @submit="handleSubmit">
+      <input
+        class="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
+        v-model="input"
+        placeholder="Say something..."
+      />
+    </form>
+  </div>
+</template>
+```
+
+With this change, you check each message for any tool calls (`toolInvocations`). These tool calls will be displayed as stringified JSON. Otherwise, you show the message content as before.
+
+Now, when you ask about the weather, you'll see the tool invocation and its result displayed in your chat interface.
+
+## Enabling Multi-Step Tool Calls
+
+You may have noticed that while the tool results are visible in the chat interface, the model isn't using this information to answer your original query. This is because once the model generates a tool call, it has technically completed its generation.
+
+To solve this, you can enable multi-step tool calls using the `maxSteps` option in your `useChat` hook. This feature will automatically send tool results back to the model to trigger an additional generation. In this case, you want the model to answer your question using the results from the weather tool.
+
+### Update Your Client-Side Code
+
+Modify your `pages/index.vue` file to include the `maxSteps` option:
+
+```typescript filename="pages/index.vue" highlight="4"
+<script setup lang="ts">
+import { useChat } from '@ai-sdk/vue';
+
+const { messages, input, handleSubmit } = useChat({ maxSteps: 5 });
+</script>
+
+<!-- ... rest of your component code -->
+```
+
+Head back to the browser and ask about the weather in a location. You should now see the model using the weather tool results to answer your question.
+
+By setting `maxSteps` to 5, you're allowing the model to use up to 5 "steps" for any given generation. This enables more complex interactions and allows the model to gather and process information over several steps if needed. You can see this in action by adding another tool to convert the temperature from Fahrenheit to Celsius.
+
+### Update Your API Route
+
+Update your `server/api/chat.ts` file to add a new tool to convert the temperature from Fahrenheit to Celsius:
+
+```typescript filename="server/api/chat.ts" highlight="34-47"
+import { streamText, tool } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+export default defineLazyEventHandler(async () => {
+  const apiKey = useRuntimeConfig().openaiApiKey;
+  if (!apiKey) throw new Error('Missing OpenAI API key');
+  const openai = createOpenAI({
+    apiKey: apiKey,
+  });
+
+  return defineEventHandler(async (event: any) => {
+    const { messages } = await readBody(event);
+
+    const result = streamText({
+      model: openai('gpt-4o-preview'),
+      messages,
+      tools: {
+        weather: tool({
+          description: 'Get the weather in a location (fahrenheit)',
+          parameters: z.object({
+            location: z
+              .string()
+              .describe('The location to get the weather for'),
+          }),
+          execute: async ({ location }) => {
+            const temperature = Math.round(Math.random() * (90 - 32) + 32);
+            return {
+              location,
+              temperature,
+            };
+          },
+        }),
+        convertFahrenheitToCelsius: tool({
+          description: 'Convert a temperature in fahrenheit to celsius',
+          parameters: z.object({
+            temperature: z
+              .number()
+              .describe('The temperature in fahrenheit to convert'),
+          }),
+          execute: async ({ temperature }) => {
+            const celsius = Math.round((temperature - 32) * (5 / 9));
+            return {
+              celsius,
+            };
+          },
+        }),
+      },
+    });
+
+    return result.toDataStreamResponse();
+  });
+});
+```
+
+Now, when you ask "What's the weather in New York in celsius?", you should see a more complete interaction:
+
+1. The model will call the weather tool for New York.
+2. You'll see the tool result displayed.
+3. It will then call the temperature conversion tool to convert the temperature from Fahrenheit to Celsius.
+4. The model will then use that information to provide a natural language response about the weather in New York.
+
+This multi-step approach allows the model to gather information and use it to provide more accurate and contextual responses, making your chatbot considerably more useful.
+
+This simple example demonstrates how tools can expand your model's capabilities. You can create more complex tools to integrate with real APIs, databases, or any other external systems, allowing the model to access and process real-world data in real-time. Tools bridge the gap between the model's knowledge cutoff and current information.
+
+## Where to Next?
+
+You've built an AI chatbot using the AI SDK! From here, you have several paths to explore:
+
+- To learn more about the AI SDK, read through the [documentation](/docs).
+- If you're interested in diving deeper with guides, check out the [RAG (retrieval-augmented generation)](/docs/guides/rag-chatbot) and [multi-modal chatbot](/docs/guides/multi-modal-chatbot) guides.
+- To jumpstart your first AI project, explore available [templates](https://vercel.com/templates?type=ai).

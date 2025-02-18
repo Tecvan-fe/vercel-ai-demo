@@ -1,0 +1,15 @@
+---
+description: instruction for creating ai app based on vercel ai sdk
+globs: 
+---
+# Vercel AI SDK Application Rules
+
+## Instructions
+
+- Analyze user requirements and plan implementation solutions
+- Follow the rules in the `docs/vercel-ai-sdk` directory when writing code
+
+## Context
+
+- This is a pnpm Monorepo project containing multiple packages, where each package is an independent npm package.
+- This project is primarily developed based on the Vercel AI SDK, therefore it must comply with Vercel AI SDK development standards. The relevant rules are located in the docs/vercel-ai-sdk directory

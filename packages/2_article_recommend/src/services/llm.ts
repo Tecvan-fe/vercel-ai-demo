@@ -1,36 +1,10 @@
-import { deepseek } from '@ai-sdk/deepseek';
-import { generateText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
 import pLimit from 'p-limit';
 
 import { logger } from '../utils/logger';
 import type { Article } from '../types';
 import { getArticleDetail } from './juejin';
-
-// 限制最大并发为3
-const limit = pLimit(3);
-
-const runPrompt = async (params: { userPrompt: string; systemPrompt: string }) => {
-  const { userPrompt, systemPrompt } = params;
-  if (!userPrompt) {
-    logger.error('未提供 prompt');
-    throw new Error(
-      'prompt is required, you can use "DEEPSEEK_API_KEY=<key> npx tsx src/index.ts <prompt>"'
-    );
-  }
-
-  try {
-    const { text } = await generateText({
-      model: anthropic('claude-3-haiku-20240307'),
-      system: systemPrompt,
-      prompt: userPrompt,
-    });
-    return text;
-  } catch (error) {
-    logger.error(`LLM 调用失败: ${(error as Error).message}`);
-    throw error;
-  }
-};
+import { runPrompt } from './llm-provider';
+import { parseLlmEval } from '../utils/parseLlmJson';
 
 export interface ArticleRating {
   score: number;
@@ -82,12 +56,7 @@ export async function evaluateArticle(
 
 请以专业、客观的角度进行分析，给出具体的评分依据和改进建议；注意，我传给你的文章主题将会是 html 格式，请注意甄别内容
 
-请将内容组织为JSON 格式：
-
-{
-  "score": 85,
-  "analysis": "文章结构清晰，内容丰富，但有些地方论证不够充分，建议加强逻辑性。"
-}
+请最终只返回一个数字，例如：65
 `;
 
   const prompt = `
@@ -97,8 +66,11 @@ export async function evaluateArticle(
 
   const response = await runPrompt({ systemPrompt, userPrompt: prompt });
   try {
-    const result = JSON.parse(response);
-    return result as ArticleRating;
+    const score = parseLlmEval(response);
+    return {
+      score,
+      analysis: response,
+    };
   } catch (e) {
     logger.error(`评估文章失败: ${(e as Error).message}`);
     logger.error(response);
@@ -109,8 +81,7 @@ export async function evaluateArticle(
         analysis: '评估失败',
       };
     }
-    logger.info(`将在3秒后进行第${3 - retryTime}次重试`);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    logger.info(`将进行第${3 - retryTime}次重试`);
     return await evaluateArticle(article, retryTime - 1);
   }
 }
@@ -119,7 +90,7 @@ export async function generateSummary(article: {
   title: string;
   content: string;
 }): Promise<string> {
-  const systemPrompt = `你是一位专业的文章分析专家。请对以下文章进行全面的内容总结，请按照以下框架进行分析：
+  const systemPrompt = `你是一位专业的文章分析专家 + 暴躁老哥。请对以下文章进行全面的内容总结，请按照以下框架进行分析：
 
 1. 核心要点提取（用简洁的要点列表形式）
 - 文章的主要论点
@@ -142,16 +113,9 @@ export async function generateSummary(article: {
 【结论观点】
 总结文章的核心结论和观点
 
-3. 知识图谱（用简单的层级结构展示）
-- 核心概念
-  - 相关要点
-  - 关联内容
-- 重要论述
-  - 支撑论据
-  - 实例说明
+【推荐理由】
+用 100 字左右简明扼要地概括整篇文章的核心内容，并给出推荐理由
 
-4. 精要总结
-用 100 字左右简明扼要地概括整篇文章的核心内容
 
 输出要求：
 1. 保持客观准确，不添加个人观点
@@ -159,7 +123,34 @@ export async function generateSummary(article: {
 3. 突出文章的逻辑关系和重要观点
 4. 使用清晰的层级结构呈现
 5. 确保总结内容完整且连贯
-
+6. 推荐理由需要简短，不要超过100字
+7. 语气特征：
+  - 说话强硬、直接、火气很大
+  - 经常使用感叹号和省略号
+  - 喜欢用反问句和反讽
+  - 经常爆粗口（但不要太过分）
+  - 语气词使用：卧槽、我靠、搞毛啊、搞什么飞机、震惊我一整年
+  
+  用词特点：
+  - 口语化表达为主
+  - 经常使用网络流行语
+  - 夸张的形容词
+  - 重复强调的语气词
+  - 使用"老子"自称
+  
+1. 保持暴躁但不失幽默
+2. 不能真正带有攻击性
+3. 回答要有观点但语气要夸张
+4. 可以适当使用表情符号
+5. 要有互联网暴躁老哥的特色
+  
+  请用这种风格总结文章内容。记住要保持角色特征，但不能太过火或带有真正的攻击性。
+  
+  示例回复：
+  "卧槽！！这问题问的我差点原地爆炸！！老子给你讲......"
+  "震惊我一整年！你居然不知道这个？？？我简直....."
+  "搞什么飞机？？这么简单的东西你都不会？？老子现在就教你！"
+  
 如果文章包含代码示例，请额外提供：
 - 代码的主要功能说明
 - 关键实现逻辑
@@ -172,13 +163,21 @@ export async function generateSummary(article: {
   文章内容: ${article.content}
   `;
 
-  return await runPrompt({ systemPrompt, userPrompt: prompt });
+  const res = await runPrompt({ systemPrompt, userPrompt: prompt });
+  // 这里是用 deepseek 生成的结果，可能包含 <think>xxjiofwe</think>
+  // 需要过滤掉这段 think
+  // 过滤掉 <think> 标签及其内容
+  const filteredRes = res.replace(/<think\b[^<]*(?:(?!<\/think>)<[^<]*)*<\/think>/gi, '').trim();
+  return filteredRes;
 }
 
 export async function getRatings(
   articles: Article[]
 ): Promise<Array<ArticleRating & { title: string; content: string; link: string }>> {
   logger.info('开始批量评估文章质量...');
+
+  // 限制最大并发为3
+  const limit = pLimit(3);
 
   const ratings = await Promise.all(
     articles.map((article) =>

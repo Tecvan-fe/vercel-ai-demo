@@ -22,7 +22,7 @@ export function generateMarkdownReport(
 ${articles
   .map(
     (article, index) => `
-## ${index + 1}. ${article.title}
+## ${index + 1}. [${article.title}](${article.link})
 
 链接: ${article.link}
 

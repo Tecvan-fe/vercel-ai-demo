@@ -28,6 +28,7 @@ async function generateDailyRecommend() {
   // 筛选评分最高的5篇文章
   const qualityArticles = await Promise.all(
     _.sortBy(ratings, 'score')
+      .reverse()
       .slice(0, 5)
       .map(async (article) => {
         logger.info(`正在生成文章摘要: ${article.title}`);

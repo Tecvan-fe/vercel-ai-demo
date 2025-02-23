@@ -13,6 +13,7 @@
   "dependencies": {
     "ai": "^4.1.41",
     "@ai-sdk/deepseek": "^0.1.10",
+    "dotenv": "^16.4.5",
     "@ai-sdk/openai": "^1.1.12",
     "zod": "^3.23.8",
     "ollama-ai-provider": "^1.2.0",

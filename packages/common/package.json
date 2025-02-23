@@ -1,12 +1,16 @@
 {
-  "name": "1_bootstrap",
+  "name": "@demo/common",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tsconfig": "./tsconfig.json"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@demo/common": "workspace:*",
     "ai": "^4.1.41",
     "@ai-sdk/deepseek": "^0.1.10",
     "@ai-sdk/openai": "^1.1.12",
@@ -14,12 +18,7 @@
     "ollama-ai-provider": "^1.2.0",
     "@ai-sdk/anthropic": "^1.1.8"
   },
-  "devDependencies": {
-    "tsx": "^4.19.1",
-    "typescript": "^5.4.5"
-  },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "description": ""
+  "license": "ISC"
 }

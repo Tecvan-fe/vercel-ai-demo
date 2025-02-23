@@ -1,15 +1,8 @@
-import { createOllama } from 'ollama-ai-provider';
-import { deepseek } from '@ai-sdk/deepseek';
 import { generateText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
 import { logger } from '../utils/logger';
+import { createDeepSeekModel } from '@demo/common';
 
 export const runPrompt = async (params: { userPrompt: string; systemPrompt: string }) => {
-  const ollama = createOllama({
-    // optional settings, e.g.
-    baseURL: 'http://localhost:11434/api',
-  });
-
   const { userPrompt, systemPrompt } = params;
   if (!userPrompt) {
     logger.error('未提供 prompt');
@@ -20,7 +13,7 @@ export const runPrompt = async (params: { userPrompt: string; systemPrompt: stri
 
   try {
     const { text } = await generateText({
-      model: ollama('deepseek-r1:7b'),
+      model: createDeepSeekModel(),
       system: systemPrompt,
       prompt: userPrompt,
     });

@@ -72,7 +72,7 @@ export async function evaluateArticle(
       analysis: response,
     };
   } catch (e) {
-    logger.error(`评估文章失败: ${(e as Error).message}`);
+    logger.error(`评估文章失败: ${(e as Error).message}， 文章标题: ${title}`);
     logger.error(response);
     if (retryTime <= 0) {
       logger.error('重试次数已用完,放弃评估');
@@ -81,7 +81,7 @@ export async function evaluateArticle(
         analysis: '评估失败',
       };
     }
-    logger.info(`将进行第${3 - retryTime}次重试`);
+    logger.info(`将对文章《${title}》进行第${3 - retryTime + 1}次重试`);
     return await evaluateArticle(article, retryTime - 1);
   }
 }
@@ -167,8 +167,7 @@ export async function generateSummary(article: {
   // 这里是用 deepseek 生成的结果，可能包含 <think>xxjiofwe</think>
   // 需要过滤掉这段 think
   // 过滤掉 <think> 标签及其内容
-  const filteredRes = res.replace(/<think\b[^<]*(?:(?!<\/think>)<[^<]*)*<\/think>/gi, '').trim();
-  return filteredRes;
+  return res;
 }
 
 export async function getRatings(
@@ -204,3 +203,17 @@ export async function getRatings(
   logger.success(`完成 ${ratings.length} 篇文章的评估`);
   return ratings;
 }
+
+// 增加元Prompt设计
+const metaPrompt = `作为专业作者，你需要：
+1. 解析用户真实意图（教学/科普/行业分析）
+2. 识别目标读者群体（新手/专家/管理者）
+3. 确定文章基调（严谨/轻松/批判）
+4. 提取核心关键词（不超过5个）`;
+// 结合大模型进行深度意图分析
+const analyzeIntent = async (prompt) => {
+  return await llm.chat({
+    system: metaPrompt,
+    messages: [{ role: 'user', content: prompt }],
+  });
+};

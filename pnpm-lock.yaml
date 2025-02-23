@@ -32,9 +32,18 @@ importers:
       '@ai-sdk/openai':
         specifier: ^1.1.12
         version: 1.1.12(zod@3.24.2)
+      '@demo/common':
+        specifier: workspace:*
+        version: link:../common
       ai:
         specifier: ^4.1.41
         version: 4.1.41(react@19.0.0)(zod@3.24.2)
+      ollama-ai-provider:
+        specifier: ^1.2.0
+        version: 1.2.0(zod@3.24.2)
+      zod:
+        specifier: ^3.23.8
+        version: 3.24.2
     devDependencies:
       tsx:
         specifier: ^4.19.1
@@ -51,6 +60,9 @@ importers:
       '@ai-sdk/deepseek':
         specifier: ^0.1.10
         version: 0.1.10(zod@3.24.2)
+      '@demo/common':
+        specifier: workspace:*
+        version: link:../common
       ai:
         specifier: ^4.1.41
         version: 4.1.41(react@19.0.0)(zod@3.24.2)
@@ -82,6 +94,27 @@ importers:
       typescript:
         specifier: ^5.4.5
         version: 5.7.3
+
+  packages/common:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.1.8
+        version: 1.1.8(zod@3.24.2)
+      '@ai-sdk/deepseek':
+        specifier: ^0.1.10
+        version: 0.1.10(zod@3.24.2)
+      '@ai-sdk/openai':
+        specifier: ^1.1.12
+        version: 1.1.12(zod@3.24.2)
+      ai:
+        specifier: ^4.1.41
+        version: 4.1.41(react@19.0.0)(zod@3.24.2)
+      ollama-ai-provider:
+        specifier: ^1.2.0
+        version: 1.2.0(zod@3.24.2)
+      zod:
+        specifier: ^3.23.8
+        version: 3.24.2
 
 packages:
 

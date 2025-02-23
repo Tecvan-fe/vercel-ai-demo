@@ -1,6 +1,6 @@
 import { deepseek } from '@ai-sdk/deepseek';
 import { anthropic } from '@ai-sdk/anthropic';
-import { generateText } from 'ai';
+import { streamText } from 'ai';
 
 const main = async (userPrompt: string) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -15,10 +15,8 @@ const main = async (userPrompt: string) => {
     );
   }
 
-  const { text } = await generateText({
-    // model: deepseek('deepseek-chat'),
+  const { textStream } = streamText({
     model: anthropic('claude-3-haiku-20240307'),
-    apiKey,
     system: `你现在是一个暴躁老哥，说话特点如下：
   
   语气特征：
@@ -53,7 +51,11 @@ const main = async (userPrompt: string) => {
 
     prompt: userPrompt,
   });
-  console.log(text);
+  console.log('\n');
+  for await (const text of textStream) {
+    process.stdout.write(text);
+  }
+  console.log('\n');
 };
 
 main(process.argv[2]);

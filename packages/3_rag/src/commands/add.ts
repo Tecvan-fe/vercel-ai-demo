@@ -20,7 +20,8 @@ export const addCommand = new Command('add')
       console.log(`读取到 ${files.length} 个文件`);
 
       // 处理每个文件
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         console.log(`处理文件: ${file.path}`);
 
         // 保存原始文档
@@ -37,7 +38,6 @@ export const addCommand = new Command('add')
 
         const embeddingContent = await generateEmbeddings(textChunks);
 
-        debugger;
         // 保存分块和向量
         await db.insert(embeddings).values(
           textChunks.map((chunk, i) => ({
@@ -47,10 +47,11 @@ export const addCommand = new Command('add')
           }))
         );
 
-        console.log(`成功处理文件: ${file.path}`);
+        console.log('\x1b[32m%s\x1b[0m', `[${i + 1}/${files.length}] 成功处理文件: ${file.path}`);
       }
 
       console.log('所有文件处理完成');
+      process.exit(0);
     } catch (error) {
       console.error('处理失败:', error.message + '\n');
       console.error(error.stack);

@@ -69,11 +69,8 @@ async function handleQuestion(question: string) {
   }
 }
 
-// 创建问答循环
-export async function startChat() {
-  console.log('欢迎使用 RAG 问答服务! 输入 "exit" 退出。\n');
-
-  while (true) {
+const requestNextQuestion = async () => {
+  try {
     const { question } = await inquirer.prompt([
       {
         type: 'input',
@@ -92,6 +89,20 @@ export async function startChat() {
       console.log('\n再见!');
       process.exit(0);
     }
+
+    return question;
+  } catch (e) {
+    console.log('\n再见!');
+    process.exit(0);
+  }
+};
+
+// 创建问答循环
+export async function startChat() {
+  console.log('欢迎使用 RAG 问答服务! 输入 "exit" 退出。\n');
+
+  while (true) {
+    const question = await requestNextQuestion();
 
     try {
       await handleQuestion(question);

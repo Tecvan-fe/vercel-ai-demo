@@ -9,3 +9,15 @@ export const env = dotenv.parse(fs.readFileSync(path.resolve(__dirname, '../../.
   OPENAI_API_KEY: string;
   DEEPSEEK_API_KEY: string;
 };
+
+if (env.OPENAI_API_KEY) {
+  process.env.OPENAI_API_KEY = env.OPENAI_API_KEY;
+}
+
+if (env.DEEPSEEK_API_KEY) {
+  process.env.DEEPSEEK_API_KEY = env.DEEPSEEK_API_KEY;
+}
+
+if (env.ANTHROPIC_API_KEY) {
+  process.env.ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY;
+}

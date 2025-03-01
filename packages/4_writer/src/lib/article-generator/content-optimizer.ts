@@ -1,14 +1,8 @@
 import { GenerateOptions, ArticleContent, SectionContent } from './types';
 import { logger } from '@demo/common';
 import { generateText, generateObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { retryWrapper, createDeepSeekModel, createOpenAIModel } from '@demo/common';
 import { z } from 'zod';
-import { retryWrapper } from '@demo/common';
-
-// 创建 OpenAI 模型
-const createModel = (modelName = 'gpt-4o') => {
-  return openai(modelName);
-};
 
 export interface OptimizationResult {
   originalContent: string;
@@ -36,8 +30,14 @@ export async function contentOptimizer(
   logger.info('开始优化文章内容...');
 
   try {
-    // 优化标题
-    content.title = await retryWrapper(optimizeTitle)(content.title, content.sections, options);
+    // 检查文章结构是否超过三级
+    const hasDeepStructure = checkDeepStructure(content.sections);
+
+    if (hasDeepStructure) {
+      logger.info('检测到超过三级的文章结构，进行结构优化...');
+      // 使用大模型重构文章结构
+      content = await retryWrapper(restructureArticle)(content, options);
+    }
 
     // 优化每个章节
     const optimizedSections: SectionContent[] = [];
@@ -50,18 +50,6 @@ export async function contentOptimizer(
 
     content.sections = optimizedSections;
 
-    // 添加结论章节（如果没有）
-    if (
-      !content.sections.some((section) =>
-        ['结论', 'summary', 'conclusion'].some((keyword) =>
-          section.title.toLowerCase().includes(keyword)
-        )
-      )
-    ) {
-      const conclusion = await retryWrapper(generateConclusion)(content, options);
-      content.sections.push(conclusion);
-    }
-
     logger.success('文章内容优化完成');
     return content;
   } catch (error) {
@@ -71,41 +59,100 @@ export async function contentOptimizer(
 }
 
 /**
- * 优化文章标题
- * @param title 原始标题
- * @param sections 文章章节
- * @param options 生成选项
- * @returns 优化后的标题
+ * 检查是否存在超过三级的结构
+ * @param sections 章节数组
+ * @param level 当前层级
+ * @returns 是否存在超过三级的结构
  */
-async function optimizeTitle(
-  title: string,
-  sections: SectionContent[],
+function checkDeepStructure(sections: SectionContent[], level: number = 1): boolean {
+  if (level > 2) return true; // 主标题为一级，这里检查的是子标题，所以超过2级就是超过三级结构
+
+  for (const section of sections) {
+    if (section.subsections && section.subsections.length > 0) {
+      if (level === 2 || checkDeepStructure(section.subsections, level + 1)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * 使用大模型重构文章结构，确保最多只有三级结构
+ * @param content 原始文章内容
+ * @param options 生成选项
+ * @returns 重构后的文章内容
+ */
+async function restructureArticle(
+  content: ArticleContent,
   options: GenerateOptions
-): Promise<string> {
+): Promise<ArticleContent> {
+  logger.info('使用大模型重构文章结构...');
+
   try {
-    const model = createModel();
+    // 将文章内容转换为JSON字符串
+    const articleJson = JSON.stringify(content, null, 2);
+
+    const model = createOpenAIModel();
     const { object } = await generateObject({
       model,
-      system: `你是一位专业的文章标题优化专家。你的任务是优化文章标题，使其更具吸引力、更清晰、更能引起读者兴趣，同时保持专业性和准确性。`,
-      prompt: `请优化以下文章标题，使其更具吸引力、更清晰、更能引起读者兴趣，同时保持专业性和准确性。
+      system: `你是一位专业的文章结构优化专家。你的任务是重构文章结构，确保文章最多只有三级结构（主标题为一级，最多再有两级子标题）。
+对于超过三级的内容，你需要将其合并到上一级章节中，并用连贯的语句串起内容，保持文章的流畅性和逻辑性。`,
+      prompt: `请重构以下文章结构，确保最多只有三级结构（主标题为一级，最多再有两级子标题）。
 
-原始标题: "${title}"
+文章JSON结构:
+${articleJson}
 
-文章章节:
-${sections.map((s) => `- ${s.title}`).join('\n')}
+重构要求:
+1. 保留主标题（title）和最多两级子标题（sections和它们的subsections）
+2. 对于超过三级的内容，将其合并到上一级章节的content中，用连贯的语句串起内容
+3. 确保合并后的内容保持原有的信息和逻辑关系
+4. 返回重构后的完整文章结构，包括所有原有字段
 
-目标风格: ${options.style || '专业、清晰'}
-
-请提供一个优化后的标题。`,
+请返回重构后的文章JSON结构。`,
       schema: z.object({
-        optimizedTitle: z.string().describe('优化后的标题'),
+        title: z.string(),
+        introduction: z.string(),
+        sections: z.array(
+          z.object({
+            title: z.string(),
+            content: z.string(),
+            subsections: z
+              .array(
+                z.object({
+                  title: z.string(),
+                  content: z.string(),
+                  subsections: z.array(z.any()).optional(),
+                })
+              )
+              .optional(),
+          })
+        ),
+        conclusion: z.string(),
+        content: z.string(),
       }),
     });
 
-    return object.optimizedTitle;
+    // 确保subsections字段存在但为空数组
+    const restructuredContent = object as ArticleContent;
+    for (const section of restructuredContent.sections) {
+      if (!section.subsections) {
+        section.subsections = [];
+      }
+
+      for (const subsection of section.subsections) {
+        if (subsection.subsections) {
+          delete subsection.subsections;
+        }
+      }
+    }
+
+    logger.success('文章结构重构完成');
+    return restructuredContent;
   } catch (error) {
-    logger.error(`优化标题时出错: ${error}`);
-    return title;
+    logger.error(`重构文章结构时出错: ${error}`);
+    return content;
   }
 }
 
@@ -120,59 +167,31 @@ async function optimizeSection(
   options: GenerateOptions
 ): Promise<SectionContent> {
   try {
-    // 优化章节标题
-    const optimizedTitle = await optimizeSectionTitle(section.title, section.content, options);
-
     // 优化章节内容
     const optimizedContent = await optimizeSectionContent(section.content, section.title, options);
 
-    return {
-      ...section,
-      title: optimizedTitle,
+    const result: SectionContent = {
+      title: section.title,
       content: optimizedContent,
+      subsections: [],
     };
+
+    // 优化子章节
+    if (section.subsections && section.subsections.length > 0) {
+      const optimizedSubsections: SectionContent[] = [];
+
+      for (const subsection of section.subsections) {
+        const optimizedSubsection = await retryWrapper(optimizeSection)(subsection, options);
+        optimizedSubsections.push(optimizedSubsection);
+      }
+
+      result.subsections = optimizedSubsections;
+    }
+
+    return result;
   } catch (error) {
     logger.error(`优化章节时出错: ${error}`);
     return section;
-  }
-}
-
-/**
- * 优化章节标题
- * @param title 原始标题
- * @param content 章节内容
- * @param options 生成选项
- * @returns 优化后的标题
- */
-async function optimizeSectionTitle(
-  title: string,
-  content: string,
-  options: GenerateOptions
-): Promise<string> {
-  try {
-    const model = createModel();
-    const { object } = await generateObject({
-      model,
-      system: `你是一位专业的文章章节标题优化专家。你的任务是优化章节标题，使其更清晰、更具描述性，同时保持简洁。`,
-      prompt: `请优化以下章节标题，使其更清晰、更具描述性，同时保持简洁。
-
-原始标题: "${title}"
-
-章节内容摘要:
-"${content.substring(0, 200)}..."
-
-目标风格: ${options.style || '专业、清晰'}
-
-请提供一个优化后的章节标题。`,
-      schema: z.object({
-        optimizedTitle: z.string().describe('优化后的章节标题'),
-      }),
-    });
-
-    return object.optimizedTitle;
-  } catch (error) {
-    logger.error(`优化章节标题时出错: ${error}`);
-    return title;
   }
 }
 
@@ -189,7 +208,7 @@ async function optimizeSectionContent(
   options: GenerateOptions
 ): Promise<string> {
   try {
-    const model = createModel();
+    const model = createDeepSeekModel();
     const { text } = await generateText({
       model,
       system: `你是一位专业的文章内容优化专家。你的任务是优化文章章节内容，使其更流畅、更有条理、更具吸引力，同时保持专业性和准确性。`,
@@ -215,54 +234,5 @@ async function optimizeSectionContent(
   } catch (error) {
     logger.error(`优化章节内容时出错: ${error}`);
     return content;
-  }
-}
-
-/**
- * 生成结论章节
- * @param content 文章内容
- * @param options 生成选项
- * @returns 结论章节
- */
-async function generateConclusion(
-  content: ArticleContent,
-  options: GenerateOptions
-): Promise<SectionContent> {
-  try {
-    const model = createModel();
-    const { object } = await generateObject({
-      model,
-      system: `你是一位专业的文章结论撰写专家。你的任务是为文章创建一个有力的结论章节，总结文章的主要观点，并提供最终见解或行动建议。`,
-      prompt: `请为以下文章创建一个有力的结论章节，总结文章的主要观点，并提供最终见解或行动建议。
-
-文章标题: "${content.title}"
-
-文章章节:
-${content.sections.map((s) => `- ${s.title}`).join('\n')}
-
-结论要求:
-1. 总结文章的主要观点和发现
-2. 提供最终见解或行动建议
-3. 结束语应该有力且令人印象深刻
-4. 风格: ${options.style || '专业、清晰'}
-5. 长度: 200-300字
-
-请提供一个完整的结论章节，包括标题和内容。`,
-      schema: z.object({
-        title: z.string().describe('结论章节标题'),
-        content: z.string().describe('结论章节内容'),
-      }),
-    });
-
-    return {
-      title: object.title,
-      content: object.content,
-    };
-  } catch (error) {
-    logger.error(`生成结论章节时出错: ${error}`);
-    return {
-      title: '结论',
-      content: '本文总结了主要观点和发现，希望对读者有所启发和帮助。',
-    };
   }
 }

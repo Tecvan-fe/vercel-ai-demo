@@ -1,9 +1,12 @@
 import { GenerateOptions, PromptAnalysis, SearchResult } from './types';
 import { logger } from '@demo/common';
-import { generateText, generateObject, NoObjectGeneratedError } from 'ai';
+import { generateText, generateObject, NoObjectGeneratedError, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { retryWrapper } from '@demo/common';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
 // 创建 OpenAI 模型
 const createModel = (modelName = 'gpt-4o') => {
   return openai(modelName);
@@ -15,6 +18,102 @@ export interface CategorizedResults {
   cases: SearchResult[];
   data: SearchResult[];
   research: SearchResult[];
+}
+
+/**
+ * 读取文件内容
+ * @param filePath 文件路径
+ * @returns 文件内容
+ */
+async function readFileContent(filePath: string): Promise<string> {
+  try {
+    // 处理相对路径和绝对路径
+    const normalizedPath = path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(process.cwd(), filePath);
+    const content = await fs.readFile(normalizedPath, 'utf-8');
+    return content;
+  } catch (error) {
+    logger.error(`读取文件失败: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `无法读取文件 ${filePath}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+// 定义文件读取工具
+const readFileTool = tool({
+  description: '读取指定路径的文件内容，当用户提示中包含文件路径，需要读取文件内容时使用',
+  parameters: z.object({
+    filePath: z.string().describe('要读取的文件的路径'),
+  }),
+  execute: async ({ filePath }) => {
+    try {
+      const content = await readFileContent(filePath);
+      return { content, success: true };
+    } catch (error) {
+      return {
+        content: '',
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
+});
+
+/**
+ * 分析提示中是否包含文件路径，并读取文件内容
+ * @param prompt 用户提示
+ * @returns 增强后的提示（如果包含文件内容）或原始提示
+ */
+async function extractFileContent(prompt: string): Promise<string> {
+  const model = createModel();
+  const { text, steps } = await generateText({
+    model,
+    tools: {
+      readFile: readFileTool,
+    },
+    maxSteps: 5, // 允许模型先读取文件，然后再回复
+    system: `你是一个智能助手，需要分析用户的提示。
+如果用户提示中包含文件路径，并且需要读取该文件的内容才能完成任务，请使用readFile工具读取文件内容。
+文件路径通常是以/开头的绝对路径或相对路径，例如/path/to/file.md或./file.md。`,
+    prompt: `请分析以下用户提示，判断是否需要读取文件：
+"${prompt}"
+
+如果需要读取文件，请使用readFile工具读取文件内容。如果不需要，请直接回复"无需读取文件"。`,
+  });
+
+  // 检查是否有工具调用
+  const hasToolCalls = steps.some((step) => step.toolCalls && step.toolCalls.length > 0);
+
+  if (hasToolCalls) {
+    // 找到文件读取工具的调用结果
+    for (const step of steps) {
+      if (step.toolResults && step.toolResults.length > 0) {
+        for (const result of step.toolResults) {
+          if (
+            result.result &&
+            typeof result.result === 'object' &&
+            'content' in result.result &&
+            result.result.success
+          ) {
+            // 找到成功的文件读取结果
+            const fileContent = result.result.content as string;
+            if (fileContent) {
+              logger.success(`成功读取文件内容`);
+              // 将文件内容添加到提示中
+              return `${prompt}\n\n文件内容:\n${fileContent}`;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    logger.info('模型判断无需读取文件');
+  }
+
+  // 如果没有成功读取文件，返回原始提示
+  return prompt;
 }
 
 /**
@@ -30,15 +129,18 @@ export async function promptAnalyzer(
   logger.info('开始分析用户提示...');
 
   try {
+    // 使用大模型分析提示，判断是否需要读取文件
+    const enhancedPrompt = await retryWrapper(extractFileContent)(prompt);
+
     // 提取主题和目标受众
-    const topicAndAudience = await retryWrapper(extractTopicAndAudience)(prompt);
+    const topicAndAudience = await retryWrapper(extractTopicAndAudience)(enhancedPrompt);
     logger.info(
       `识别主题: "${topicAndAudience.topic}" 目标受众: "${topicAndAudience.targetAudience}"`
     );
 
     // 确定内容类型和风格
     const contentTypeAndStyle = await retryWrapper(determineContentTypeAndStyle)(
-      prompt,
+      enhancedPrompt,
       topicAndAudience
     );
     logger.info(
@@ -47,14 +149,14 @@ export async function promptAnalyzer(
 
     // 提取关键主题和关键词
     const themesAndKeywords = await retryWrapper(extractThemesAndKeywords)(
-      prompt,
+      enhancedPrompt,
       topicAndAudience
     );
     logger.info(`提取了 ${themesAndKeywords.keyThemes.length} 个关键主题`);
 
     // 确定内容目标和建议结构
     const goalsAndStructure = await retryWrapper(determineGoalsAndStructure)(
-      prompt,
+      enhancedPrompt,
       topicAndAudience,
       contentTypeAndStyle,
       themesAndKeywords
@@ -69,12 +171,16 @@ export async function promptAnalyzer(
     logger.info(`生成了 ${researchSuggestions.length} 条研究建议`);
 
     // 确定合适的字数范围
-    const wordCountRange = retryWrapper(determineWordCountRange)(
+    const wordCountRange = await retryWrapper(determineWordCountRangeAsync)(
       contentTypeAndStyle.contentType,
       500, // 默认最小字数
       3000 // 默认最大字数
     );
     logger.info(`建议字数范围: ${wordCountRange.min}-${wordCountRange.max} 字`);
+
+    // 生成关键词密度
+    const keywordDensity = generateKeywordDensity(themesAndKeywords.keyThemes);
+    logger.info(`生成了 ${Object.keys(keywordDensity).length} 个关键词的密度建议`);
 
     // 组合分析结果
     const analysis: PromptAnalysis = {
@@ -85,6 +191,7 @@ export async function promptAnalyzer(
       contentGoals: goalsAndStructure.contentGoals,
       researchSuggestions,
       wordCountRange,
+      keywordDensity,
     };
 
     logger.success('提示分析完成');
@@ -93,6 +200,28 @@ export async function promptAnalyzer(
     logger.error(`分析提示时出错: ${error instanceof Error ? error.message : String(error)}`);
     throw new Error(`提示分析失败: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+/**
+ * 生成关键词密度
+ */
+function generateKeywordDensity(keyThemes: string[]): { [keyword: string]: number } {
+  const density: { [keyword: string]: number } = {};
+
+  // 为每个关键主题分配一个合理的密度值
+  keyThemes.forEach((theme, index) => {
+    // 主要关键词密度略高，后面的关键词密度逐渐降低
+    const baseValue = 3.0; // 基础密度值
+    const decayFactor = 0.5; // 衰减因子
+
+    // 计算密度，确保在合理范围内 (1.0-5.0%)
+    const calculatedDensity = Math.max(1.0, Math.min(5.0, baseValue - index * decayFactor));
+
+    // 四舍五入到一位小数
+    density[theme] = Math.round(calculatedDensity * 10) / 10;
+  });
+
+  return density;
 }
 
 /**
@@ -247,6 +376,17 @@ async function generateResearchSuggestions(
   });
 
   return object.suggestions;
+}
+
+/**
+ * 确定合适的字数范围 (异步包装)
+ */
+async function determineWordCountRangeAsync(
+  contentType: string,
+  minWordCount: number,
+  maxWordCount: number
+): Promise<{ min: number; max: number }> {
+  return determineWordCountRange(contentType, minWordCount, maxWordCount);
 }
 
 /**

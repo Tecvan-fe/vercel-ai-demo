@@ -27,8 +27,8 @@
 
 ## 技术栈
 
-- vercel ai sdk
-- commander
+- 使用 vercel ai sdk 调用 llm，相关接口说明已经保存到 docs/vercel-ai-sdk
+- 使用 commander 完成命令行交互，使用 chalk 调整日志输出的颜色
 - pnpm
 - typescript
 - 使用 @demo/common 输出日志

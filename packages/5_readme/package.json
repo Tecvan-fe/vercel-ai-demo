@@ -1,0 +1,39 @@
+{
+  "name": "@demo/readme-generator",
+  "version": "1.0.0",
+  "description": "基于LLM的README自动生成机器人",
+  "main": "dist/index.js",
+  "bin": {
+    "readme-generator": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@demo/common": "workspace:*",
+    "ai": "^4.1.41",
+    "axios": "^1.5.0",
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "fast-glob": "^3.3.2",
+    "ts-morph": "^21.0.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.5.0",
+    "inquirer": "8.2.4",
+    "tsx": "^4.15.5",
+    "typescript": "^5.1.6"
+  },
+  "keywords": [
+    "readme",
+    "generator",
+    "llm",
+    "documentation"
+  ],
+  "author": "",
+  "license": "ISC"
+}

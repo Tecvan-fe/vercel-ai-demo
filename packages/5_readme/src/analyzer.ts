@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { logger, createAnthropicModel } from '@demo/common';
 import { AnalysisResult, ModuleExports } from './types';
-import { AIMessage, HumanMessage } from 'ai';
+import { generateText } from 'ai';
 
 // 创建LLM模型
 const model = createAnthropicModel();
@@ -76,16 +76,16 @@ ${fileContent}
 `;
 
     // 调用LLM
-    const response = await model.chat({
-      messages: [new HumanMessage(prompt)],
+    const { text } = await generateText({
+      model: model,
+      prompt: prompt,
       temperature: 0.1,
-      max_tokens: 1000,
+      maxTokens: 1000,
     });
 
     try {
       // 提取JSON部分
-      const content = response.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('无法从LLM响应中提取JSON');
       }
@@ -140,13 +140,14 @@ ${fileContent}
 `;
 
     // 调用LLM
-    const response = await model.chat({
-      messages: [new HumanMessage(prompt)],
+    const { text } = await generateText({
+      model: model,
+      prompt: prompt,
       temperature: 0.3,
-      max_tokens: 500,
+      maxTokens: 500,
     });
 
-    return response.content.toString().trim();
+    return text.trim();
   } catch (error) {
     logger.error(`分析实现逻辑失败: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
@@ -189,13 +190,14 @@ ${implementation}
 `;
 
     // 调用LLM
-    const response = await model.chat({
-      messages: [new HumanMessage(prompt)],
+    const { text } = await generateText({
+      model: model,
+      prompt: prompt,
       temperature: 0.3,
-      max_tokens: 800,
+      maxTokens: 800,
     });
 
-    return response.content.toString().trim();
+    return text.trim();
   } catch (error) {
     logger.error(`生成功能描述失败: ${error instanceof Error ? error.message : String(error)}`);
     throw error;

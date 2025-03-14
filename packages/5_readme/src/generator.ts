@@ -5,7 +5,7 @@ import { scanDirectory } from './scanner';
 import { loadTasks, saveTasks } from './cache';
 import { analyzeFile } from './analyzer';
 import { FileTask, GenerateReadmeOptions, ReadmeStructure } from './types';
-import { HumanMessage } from 'ai';
+import { generateText } from 'ai';
 
 // 创建LLM模型
 const model = createAnthropicModel();
@@ -183,16 +183,16 @@ ${JSON.stringify(tasksData, null, 2)}
 `;
 
     // 调用LLM
-    const response = await model.chat({
-      messages: [new HumanMessage(prompt)],
+    const { text } = await generateText({
+      model: model,
+      prompt: prompt,
       temperature: 0.3,
-      max_tokens: 2000,
+      maxTokens: 2000,
     });
 
     try {
       // 提取JSON部分
-      const content = response.content.toString();
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('无法从LLM响应中提取JSON');
       }

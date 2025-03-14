@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-game-bg font-sans;
+}
+
+.game-container {
+  @apply max-w-md mx-auto my-8 p-4;
+}
+
+.game-header {
+  @apply flex justify-between items-center mb-4;
+}
+
+.game-title {
+  @apply text-7xl font-bold text-gray-700;
+}
+
+.score-container {
+  @apply flex gap-2;
+}
+
+.score-box {
+  @apply bg-board-bg text-white p-2 rounded text-center min-w-20;
+}
+
+.score-label {
+  @apply text-sm font-semibold;
+}
+
+.score-value {
+  @apply text-2xl font-bold;
+}
+
+.game-board {
+  @apply bg-board-bg p-4 rounded-lg grid grid-cols-4 gap-4;
+}
+
+.game-cell {
+  @apply bg-tile-bg rounded-md aspect-square flex items-center justify-center text-4xl font-bold relative;
+}
+
+.tile {
+  @apply w-full h-full rounded-md flex items-center justify-center text-4xl font-bold absolute transition-all duration-100;
+}
+
+.tile-2 {
+  @apply bg-tile-2 text-gray-700;
+}
+
+.tile-4 {
+  @apply bg-tile-4 text-gray-700;
+}
+
+.tile-8 {
+  @apply bg-tile-8 text-white;
+}
+
+.tile-16 {
+  @apply bg-tile-16 text-white;
+}
+
+.tile-32 {
+  @apply bg-tile-32 text-white;
+}
+
+.tile-64 {
+  @apply bg-tile-64 text-white;
+}
+
+.tile-128 {
+  @apply bg-tile-128 text-white text-3xl;
+}
+
+.tile-256 {
+  @apply bg-tile-256 text-white text-3xl;
+}
+
+.tile-512 {
+  @apply bg-tile-512 text-white text-3xl;
+}
+
+.tile-1024 {
+  @apply bg-tile-1024 text-white text-2xl;
+}
+
+.tile-2048 {
+  @apply bg-tile-2048 text-white text-2xl;
+}
+
+.game-message {
+  @apply text-center mt-4 text-lg font-bold;
+}
+
+.game-instructions {
+  @apply text-gray-600 mt-8 border-t border-gray-300 pt-4;
+}
+
+.difficulty-selector {
+  @apply mt-4 mb-6;
+}
+
+.difficulty-selector select {
+  @apply ml-2 p-1 border border-gray-300 rounded;
+}

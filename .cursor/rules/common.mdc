@@ -1,0 +1,6 @@
+---
+description: 通用编码规则
+globs: 
+alwaysApply: false
+---
+- 使用 pnpm 管理依赖

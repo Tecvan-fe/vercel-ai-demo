@@ -1,0 +1,35 @@
+---
+name: Button
+description: 按钮组件：用于触发操作的交互式控件
+props:
+  type: 按钮类型，可选值：primary、secondary、text
+  size: 按钮大小，可选值：small、medium、large
+  disabled: 是否禁用
+---
+
+# Button 按钮
+
+按钮用于触发一个操作，如提交表单、打开对话框等。
+
+## 基本用法
+
+```jsx
+import { Button } from '@any/design';
+
+export default () => (
+  <div>
+    <Button type="primary">主要按钮</Button>
+    <Button type="secondary">次要按钮</Button>
+    <Button type="text">文本按钮</Button>
+  </div>
+);
+```
+
+## API
+
+| 属性     | 说明             | 类型                               | 默认值    |
+| -------- | ---------------- | ---------------------------------- | --------- |
+| type     | 按钮类型         | 'primary' \| 'secondary' \| 'text' | 'primary' |
+| size     | 按钮大小         | 'small' \| 'medium' \| 'large'     | 'medium'  |
+| disabled | 是否禁用         | boolean                            | false     |
+| onClick  | 点击按钮时的回调 | (event) => void                    | -         |

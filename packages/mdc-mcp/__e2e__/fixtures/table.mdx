@@ -1,0 +1,111 @@
+---
+name: Table
+description: 表格组件：用于展示结构化数据
+props:
+  dataSource: 数据源
+  columns: 表格列配置
+  bordered: 是否显示边框
+  loading: 是否加载中
+  pagination: 分页配置
+---
+
+# Table 表格
+
+表格用于展示结构化数据，支持排序、筛选、分页等功能。
+
+## 基本用法
+
+```jsx
+import { Table } from '@any/design';
+
+const dataSource = [
+  {
+    key: '1',
+    name: '张三',
+    age: 32,
+    address: '北京市朝阳区',
+  },
+  {
+    key: '2',
+    name: '李四',
+    age: 42,
+    address: '上海市浦东新区',
+  },
+];
+
+const columns = [
+  {
+    title: '姓名',
+    dataIndex: 'name',
+    key: 'name',
+  },
+  {
+    title: '年龄',
+    dataIndex: 'age',
+    key: 'age',
+  },
+  {
+    title: '住址',
+    dataIndex: 'address',
+    key: 'address',
+  },
+];
+
+export default () => <Table dataSource={dataSource} columns={columns} />;
+```
+
+## 带边框
+
+```jsx
+import { Table } from '@any/design';
+
+export default () => <Table dataSource={dataSource} columns={columns} bordered />;
+```
+
+## 加载状态
+
+```jsx
+import { Table } from '@any/design';
+
+export default () => <Table dataSource={dataSource} columns={columns} loading />;
+```
+
+## 分页
+
+```jsx
+import { Table } from '@any/design';
+
+export default () => (
+  <Table dataSource={dataSource} columns={columns} pagination={{ pageSize: 10 }} />
+);
+```
+
+## API
+
+### Table
+
+| 属性         | 说明                   | 类型                               | 默认值    |
+| ------------ | ---------------------- | ---------------------------------- | --------- |
+| dataSource   | 数据数组               | object[]                           | -         |
+| columns      | 表格列的配置描述       | ColumnProps[]                      | -         |
+| bordered     | 是否显示边框           | boolean                            | false     |
+| loading      | 页面是否加载中         | boolean                            | false     |
+| pagination   | 分页器，参考分页器文档 | object                             | -         |
+| rowKey       | 表格行 key 的取值      | string \| function(record): string | 'key'     |
+| rowSelection | 表格行是否可选择       | object                             | -         |
+| scroll       | 表格是否可滚动         | { x: number \| true, y: number }   | -         |
+| size         | 表格大小               | 'default' \| 'middle' \| 'small'   | 'default' |
+
+### Column
+
+| 属性      | 说明                           | 类型                             | 默认值 |
+| --------- | ------------------------------ | -------------------------------- | ------ |
+| title     | 列头显示文字                   | string \| ReactNode              | -      |
+| dataIndex | 列数据在数据项中对应的路径     | string                           | -      |
+| key       | React 需要的 key               | string                           | -      |
+| render    | 生成复杂数据的渲染函数         | function(text, record, index) {} | -      |
+| align     | 设置列的对齐方式               | 'left' \| 'right' \| 'center'    | 'left' |
+| width     | 列宽度                         | string \| number                 | -      |
+| sorter    | 排序函数                       | function \| boolean              | -      |
+| filters   | 表头的筛选菜单项               | object[]                         | -      |
+| onFilter  | 本地模式下，确定筛选的运行函数 | function                         | -      |

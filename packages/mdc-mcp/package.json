@@ -1,0 +1,59 @@
+{
+  "name": "@tecvan-fe/mdc-mcp",
+  "version": "0.0.1-alpha.2",
+  "description": "mcp server for any mdc docs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tecvan-fe/vercel-ai-demo",
+    "directory": "packages/mdc-mcp"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "ISC",
+  "author": "tecvan-fe@gmail.com",
+  "maintainers": [],
+  "bin": {
+    "mdc-mcp": "bin/main"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "!**/*.map",
+    "*.tsbuildinfo",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "build:rollup": "rollup -c rollup.config.mjs",
+    "lint": "eslint ./ --cache",
+    "serve": "tsx src/cli.ts serve",
+    "test": "vitest --run --passWithNoTests",
+    "test:cov": "npm run test -- --coverage"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@rushstack/node-core-library": "3.55.2",
+    "axios": "^1.4.0",
+    "commander": "^12.0.0",
+    "express": "^4.1.2",
+    "markdown-it": "~13.0.2",
+    "markdown-it-meta": "^0.0.1",
+    "morgan": "^1.10.0",
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-json": "~6.0.0",
+    "@rollup/plugin-node-resolve": "~15.0.1",
+    "@rollup/plugin-sucrase": "^5.0.2",
+    "@types/axios": "^0.9.36",
+    "@types/markdown-it": "~13.0.7",
+    "@types/node": "^20",
+    "@vitest/coverage-v8": "~3.0.5",
+    "rollup": "^4.9.0",
+    "sucrase": "^3.32.0",
+    "tsx": "^4.19.2",
+    "vitest": "~3.0.5"
+  }
+}

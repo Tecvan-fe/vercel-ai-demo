@@ -1,0 +1,142 @@
+---
+name: Modal
+description: 模态对话框组件：用于展示需要用户处理的内容，又不希望跳转页面以致打断工作流程时
+props:
+  visible: 是否可见
+  title: 标题
+  width: 宽度
+  centered: 是否居中
+  closable: 是否显示关闭按钮
+  maskClosable: 点击蒙层是否允许关闭
+  footer: 底部内容
+  onOk: 点击确定回调
+  onCancel: 点击取消回调
+---
+
+# Modal 对话框
+
+模态对话框。
+
+## 何时使用
+
+需要用户处理事务，又不希望跳转页面以致打断工作流程时，可以使用 Modal 在当前页面正中打开一个浮层，承载相应的操作。
+
+## 基本用法
+
+```jsx
+import { Modal, Button } from '@any/design';
+import { useState } from 'react';
+
+export default () => {
+  const [visible, setVisible] = useState(false);
+
+  const showModal = () => {
+    setVisible(true);
+  };
+
+  const handleOk = () => {
+    setVisible(false);
+  };
+
+  const handleCancel = () => {
+    setVisible(false);
+  };
+
+  return (
+    <div>
+      <Button type="primary" onClick={showModal}>
+        打开对话框
+      </Button>
+      <Modal title="基本对话框" visible={visible} onOk={handleOk} onCancel={handleCancel}>
+        <p>对话框内容...</p>
+        <p>更多内容...</p>
+      </Modal>
+    </div>
+  );
+};
+```
+
+## 自定义页脚
+
+```jsx
+import { Modal, Button } from '@any/design';
+import { useState } from 'react';
+
+export default () => {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      <Button type="primary" onClick={() => setVisible(true)}>
+        打开对话框
+      </Button>
+      <Modal
+        title="自定义页脚"
+        visible={visible}
+        footer={[
+          <Button key="back" onClick={() => setVisible(false)}>
+            返回
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => setVisible(false)}>
+            提交
+          </Button>,
+        ]}
+        onCancel={() => setVisible(false)}
+      >
+        <p>对话框内容...</p>
+      </Modal>
+    </div>
+  );
+};
+```
+
+## 确认对话框
+
+```jsx
+import { Modal, Button } from '@any/design';
+
+export default () => {
+  const showConfirm = () => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除这条记录吗？',
+      onOk() {
+        console.log('OK');
+      },
+      onCancel() {
+        console.log('Cancel');
+      },
+    });
+  };
+
+  return <Button onClick={showConfirm}>确认对话框</Button>;
+};
+```
+
+## API
+
+### Modal
+
+| 属性         | 说明                                            | 类型                | 默认值       |
+| ------------ | ----------------------------------------------- | ------------------- | ------------ |
+| visible      | 对话框是否可见                                  | boolean             | false        |
+| title        | 标题                                            | string \| ReactNode | -            |
+| width        | 宽度                                            | string \| number    | 520          |
+| centered     | 是否居中                                        | boolean             | false        |
+| closable     | 是否显示右上角的关闭按钮                        | boolean             | true         |
+| maskClosable | 点击蒙层是否允许关闭                            | boolean             | true         |
+| footer       | 底部内容，当不需要默认底部按钮时，可以设为 null | string \| ReactNode | 确定取消按钮 |
+| onOk         | 点击确定回调                                    | function(e)         | -            |
+| onCancel     | 点击遮罩层或右上角叉或取消按钮的回调            | function(e)         | -            |
+
+### Modal.method()
+
+包括：
+
+- `Modal.info`
+- `Modal.success`
+- `Modal.error`
+- `Modal.warning`
+- `Modal.confirm`
+
+以上均为一组快捷方法，调用后会直接在屏幕正中显示对话框。

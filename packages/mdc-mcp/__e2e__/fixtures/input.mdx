@@ -1,0 +1,65 @@
+---
+name: Input
+description: 输入框组件：用于接收用户的文本输入
+props:
+  type: 输入框类型，可选值：text、password、number
+  size: 输入框大小，可选值：small、medium、large
+  disabled: 是否禁用
+  placeholder: 占位提示文本
+---
+
+# Input 输入框
+
+输入框用于接收用户的文本输入，是最基础的表单控件。
+
+## 基本用法
+
+```jsx
+import { Input } from '@any/design';
+
+export default () => (
+  <div>
+    <Input placeholder="请输入内容" />
+    <Input type="password" placeholder="请输入密码" />
+    <Input type="number" placeholder="请输入数字" />
+  </div>
+);
+```
+
+## 不同尺寸
+
+```jsx
+import { Input } from '@any/design';
+
+export default () => (
+  <div>
+    <Input size="small" placeholder="小尺寸" />
+    <Input size="medium" placeholder="中等尺寸" />
+    <Input size="large" placeholder="大尺寸" />
+  </div>
+);
+```
+
+## 禁用状态
+
+```jsx
+import { Input } from '@any/design';
+
+export default () => (
+  <div>
+    <Input disabled placeholder="禁用状态" />
+  </div>
+);
+```
+
+## API
+
+| 属性         | 说明                   | 类型                             | 默认值   |
+| ------------ | ---------------------- | -------------------------------- | -------- |
+| type         | 输入框类型             | 'text' \| 'password' \| 'number' | 'text'   |
+| size         | 输入框大小             | 'small' \| 'medium' \| 'large'   | 'medium' |
+| disabled     | 是否禁用               | boolean                          | false    |
+| placeholder  | 占位提示文本           | string                           | -        |
+| value        | 输入框内容             | string                           | -        |
+| onChange     | 输入框内容变化时的回调 | (event) => void                  | -        |
+| onPressEnter | 按下回车键时的回调     | (event) => void                  | -        |

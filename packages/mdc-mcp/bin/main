@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+
+const path = require('path');
+process.env.DEFAULT_DOCS_DIR = path.resolve(__dirname, '../dist/docs');
+
+require('../dist/cli.js');

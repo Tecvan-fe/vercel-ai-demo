@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "lib-ts",
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "module": "CommonJS",
+    "target": "ES2020",
+    "types": ["node"],
+    "moduleResolution": "node",
+    "tsBuildInfoFile": "lib-ts/tsconfig.build.tsbuildinfo"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

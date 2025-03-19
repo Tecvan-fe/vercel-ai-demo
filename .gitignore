@@ -4,3 +4,6 @@ dist
 
 .env
 .DS_Store
+
+# Private individual user cursor rules
+.cursor/rules/_*.mdc

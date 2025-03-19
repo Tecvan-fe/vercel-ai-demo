@@ -1,0 +1,83 @@
+---
+description: Use Vercel AI SDK for LLM calls, and prioritize the tools capability for function calling
+globs: **/*.{js,jsx,ts,tsx}
+alwaysApply: true
+---
+
+# Vercel AI SDK Usage Guidelines
+
+## Context
+- When integrating LLM capabilities into applications
+- When implementing function calling features
+- When developing AI features that need to interact with external systems
+
+## Requirements
+- Use Vercel AI SDK as the preferred solution for LLM integration
+- Prioritize the tools capability for function calling, rather than custom parsing solutions
+- Follow Vercel AI SDK best practices and development standards
+- Use Zod for parameter validation and type definition
+
+## Examples
+
+<example>
+// ✅ Recommended: Using Vercel AI SDK's tools capability
+import { generateText, tool } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+const result = await generateText({
+  model: openai('gpt-4o'),
+  tools: {
+    weather: tool({
+      description: 'Get weather information for a specified location',
+      parameters: z.object({
+        location: z.string().describe('Location to get weather for'),
+      }),
+      execute: async ({ location }) => {
+        // Call weather API to get data
+        return {
+          location,
+          temperature: await getTemperature(location),
+          conditions: await getConditions(location),
+        };
+      },
+    }),
+  },
+  prompt: 'What is the weather like in Beijing today?',
+  maxSteps: 3, // Enable multi-step calling
+});
+</example>
+
+<example type="invalid">
+// ❌ Avoid: Directly parsing LLM output for function calling
+const response = await openai.chat.completions.create({
+  model: 'gpt-4',
+  messages: [
+    { role: 'system', content: 'You are an assistant that can call the weather API' },
+    { role: 'user', content: 'What is the weather like in Beijing today?' }
+  ]
+});
+
+// Manually parse response and execute function call
+const content = response.choices[0].message.content;
+if (content.includes('weather')) {
+  const weatherData = await getWeatherData('Beijing');
+  // Process weather data...
+}
+</example>
+
+## Core Rules
+- Always use Vercel AI SDK's `generateText` or `streamText` functions for LLM calls
+- Use Zod to define tool parameter types and validation rules
+- Provide clear descriptions for each tool to help the LLM choose the right tool
+- Implement the `execute` function to handle tool call logic
+- For scenarios requiring multi-step interaction, use the `maxSteps` parameter to enable multi-step calling
+- For complex tool sets, use `experimental_activeTools` to control currently available tools
+- In UI interaction scenarios, consider using `streamUI` to implement generative UI
+
+## Tool Calling Best Practices
+- Each tool should have a single clear responsibility
+- Tool descriptions should clearly explain the tool's purpose and usage scenarios
+- Parameter definitions should be strict and descriptive, helping the LLM construct parameters correctly
+- Handle errors that may occur during tool execution and provide meaningful error messages
+- Consider using `experimental_repairToolCall` to fix tool call errors 

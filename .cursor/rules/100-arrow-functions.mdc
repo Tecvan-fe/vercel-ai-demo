@@ -1,0 +1,60 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Use arrow functions instead of traditional function declarations for consistent and modern JavaScript/TypeScript code
+globs: **/*.{js,jsx,ts,tsx}
+alwaysApply: false
+---
+
+# Arrow Functions Preference
+
+## Context
+- When writing JavaScript or TypeScript code
+- When defining functions in any context (components, utilities, handlers, etc.)
+- When refactoring existing code
+
+## Requirements
+- Use arrow functions for all new function definitions
+- Use arrow functions for component definitions in React
+- Maintain consistent function style throughout the codebase
+- Preserve `function` keyword only when necessary (e.g., when `this` binding is required)
+
+## Examples
+<example>
+// Preferred: Arrow function
+const calculateTotal = (items) => {
+  return items.reduce((sum, item) => sum + item.price, 0);
+};
+
+// Preferred: Implicit return when possible
+const multiply = (a, b) => a * b;
+
+// Preferred: React component with arrow function
+const Button = ({ onClick, children }) => {
+  return <button onClick={onClick}>{children}</button>;
+};
+</example>
+
+<example type="invalid">
+// Avoid: Traditional function declaration
+function calculateTotal(items) {
+  return items.reduce(function(sum, item) {
+    return sum + item.price;
+  }, 0);
+}
+
+// Avoid: Function declaration for React components
+function Button({ onClick, children }) {
+  return <button onClick={onClick}>{children}</button>;
+}
+</example>
+
+## Critical Rules
+  - Always use arrow functions for new code unless there's a specific reason not to
+  - Use implicit returns for simple one-line functions
+  - Maintain consistent arrow function style across the codebase
+  - Only use traditional function declarations when arrow functions won't work (e.g., when specific `this` binding is required)
+  - When refactoring, convert traditional functions to arrow functions when possible

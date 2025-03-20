@@ -17,6 +17,9 @@
   "license": "ISC",
   "description": "基于Rspack、Ant Design和Tailwind CSS的React应用示例",
   "dependencies": {
+    "@flowgram.ai/free-layout-editor": "^0.1.14",
+    "@flowgram.ai/free-snap-plugin": "^0.1.14",
+    "@flowgram.ai/minimap-plugin": "^0.1.14",
     "antd": "^5.24.4",
     "framer-motion": "^12.5.0",
     "react": "^18.2.0",

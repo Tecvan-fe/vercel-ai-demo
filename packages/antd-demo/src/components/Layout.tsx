@@ -7,6 +7,7 @@ import {
   UnorderedListOutlined,
   InfoCircleOutlined,
   GithubOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -49,10 +50,16 @@ const items: MenuItem[] = [
     label: 'GitHub设置',
     path: '/github-settings',
   },
+  {
+    key: '6',
+    icon: <NodeIndexOutlined />,
+    label: '流程图编辑器',
+    path: '/flowchart',
+  },
 ];
 
 // 特殊页面布局 - 不包含侧边栏的页面路径
-const specialLayoutPaths = ['/about'];
+const specialLayoutPaths = ['/about', '/flowchart'];
 
 const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);

@@ -12,6 +12,7 @@ import About from './pages/About';
 import NotFound from './pages/NotFound';
 import GithubSettings from './pages/GithubSettings';
 import BlogPost from './pages/BlogPost';
+import FlowchartPage from './pages/flowchart';
 import PageTransition from './components/PageTransition';
 
 // 特殊页面 - 这些页面使用自己的布局，不需要页面过渡动画
@@ -52,6 +53,9 @@ const AnimatedRoutes = () => {
             }
           />
         </Route>
+
+        {/* 流程图页面 - 使用自己的布局 */}
+        <Route path="/flowchart" element={<FlowchartPage />} />
 
         {/* 默认布局路由 */}
         <Route path="/" element={<AppLayout />}>

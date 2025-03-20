@@ -1,0 +1,85 @@
+.flowgram-demo-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.flowgram-demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #e0e0e0;
+  height: 60px;
+}
+
+.flowgram-demo-header h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.flowgram-help-button {
+  background-color: #1677ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.flowgram-help-button:hover {
+  background-color: #4096ff;
+}
+
+.flowgram-help-panel {
+  background-color: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 15px 20px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.flowgram-help-panel h2 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.flowgram-help-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.flowgram-help-section {
+  flex: 1;
+  min-width: 250px;
+}
+
+.flowgram-help-section h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #1677ff;
+}
+
+.flowgram-help-section ul {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.flowgram-help-section li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.flowgram-editor-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}

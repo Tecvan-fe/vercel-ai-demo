@@ -1,0 +1,51 @@
+---
+description: 使用私有组件库(MCP)创建UI组件，优先查询组件库再进行编码
+globs: **/*.{tsx,jsx}
+alwaysApply: false
+---
+
+# 私有组件库优先使用规则
+
+## Context
+- 当需要创建新的UI组件或页面时
+- 当用户请求设计或实现UI界面时
+- 当需要构建表单、表格、按钮等常见UI元素时
+
+## Requirements
+- 优先使用MCP(MDC-MCP)工具获取私有组件库信息
+- 使用`mcp_mdc_mcp_get_components_list`工具查询可用组件列表
+- 使用`mcp_mdc_mcp_get_component_detail`工具获取具体组件详情
+- 根据组件库文档使用正确的API和属性进行组件开发
+- 确保代码遵循组件库的最佳实践
+
+## Examples
+<example>
+// ✅ 使用MCP工具获取组件信息并实现
+// 1. 调用mcp_mdc_mcp_get_components_list查看可用组件
+// 2. 调用mcp_mdc_mcp_get_component_detail获取Button组件详情
+// 3. 使用正确的导入和属性实现功能
+
+import { Button } from 'antd';
+
+export function SubmitButton() {
+  return <Button type="primary">提交</Button>;
+}
+</example>
+
+<example type="invalid">
+// ❌ 直接使用第三方组件库而不检查私有组件库
+// 未先检查私有组件是否可用，直接使用其他库
+
+import { Button } from 'some-other-library';
+
+export function SubmitButton() {
+  return <Button primary>提交</Button>;
+}
+</example>
+
+## Critical Rules
+  - 总是先调用MCP工具获取组件列表和详情，再开始编码
+  - 优先使用私有组件库而非其他第三方组件
+  - 遵循组件库推荐的属性和API使用方式
+  - 不要在没有检查私有组件库的情况下自行创建重复功能的组件
+  - 记录并引用组件的文档URL，以便用户了解更多使用细节

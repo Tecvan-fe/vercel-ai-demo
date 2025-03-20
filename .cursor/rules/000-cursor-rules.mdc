@@ -100,5 +100,6 @@ Common glob patterns for different rule types:
   - Always include a valid and invalid example
   - Quotes are not needed around glob patterns
   - ALWAYS write rules in English only - never use other languages when creating or updating rules
+  - When users use the `/rules` command, read this file and generate new development standard documentation based on the rules
 
 

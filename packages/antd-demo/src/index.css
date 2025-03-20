@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 一些基本样式重置，不会与Ant Design冲突 */
+html,
+body {
+  @apply h-full w-full m-0 font-sans antialiased;
+}
+
+#root {
+  @apply h-full w-full;
+}
